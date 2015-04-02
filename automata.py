@@ -28,42 +28,13 @@ class organism():
         self.color = color
 
 
-def draw(organisms, term):
-    """ Draws all organisms. """
-    cells = np.zeros((term.height - 1, term.width - 1))
-    # compress cell-matrices
-    for idx in range(len(organisms)):
-        cells += (organisms[idx].cells * (idx + 1))
-
-    # draw compressed matrix
-    for y in range(cells.shape[0]):
-        for x in range(cells.shape[1]):
-            with term.location(x, y):
-                if cells[y, x] and cells[y, x] < len(organisms) + 1:
-                    # print int(cells[y, x])
-                    print organisms[int(cells[y, x]) - 1].color(" ")
-                else:
-                    print term.on_black(' ')
-
-
 def draw2(organisms, term):
     """ Draws all organisms. """
-    cells = np.zeros((term.height - 1, term.width - 1))
-    # compress cell-matrices
-    for idx in range(len(organisms)):
-        tmp = organisms[
-            idx].cells - scn.morphology.binary_erosion(organisms[idx].cells > 0)
-        cells += (tmp * (idx + 1))
-
-    # draw compressed matrix
-    for y in range(cells.shape[0]):
-        for x in range(cells.shape[1]):
-            with term.location(x, y):
-                if cells[y, x] and cells[y, x] < len(organisms) + 1:
-                    # print int(cells[y, x])
-                    print organisms[int(cells[y, x]) - 1].color(" ")
-                else:
-                    print term.on_black(" ")
+    for organism in organisms:
+        for cell in np.transpose(get_boundary_cells(organism, term).nonzero()):
+        #for cell in np.transpose(organism.cells.nonzero()):
+            with term.location(cell[1], cell[0]):
+                print organism.color(" ")
 
 
 def get_all_cells(organisms, term):
@@ -73,42 +44,33 @@ def get_all_cells(organisms, term):
     return cells
 
 
-def get_boundary_cells(organism):
-    return organism.cells - scn.morphology.binary_erosion(organism.cells > 0)
+def get_boundary_cells(organisms, term):
+    if type(organisms) == list:
+        cells = np.zeros((term.height - 1, term.width - 1))
+        for organism in organisms:
+            cells += get_boundary_cells(organism, term)
+        cells = cells > 0
+    else:
+        cells = organisms.cells
+    return cells - scn.morphology.binary_erosion(cells > 0)
 
 
 def fight(organisms, term):
     targets = get_boundary_cells(organism)
     return targets
 
+
 def update(organisms, term):
     """ Updates each organism (procreate, kill, decay). """
-    cells = np.zeros((term.height - 1, term.width - 1))
-    for organism in organisms:
-        cells += organism.cells
+    cells = get_all_cells(organisms, term)
 
     for organism in organisms:
-        for y in range(cells.shape[0]):
-            for x in range(cells.shape[1]):
-                if organism.cells[y, x]:
-                    neighbours = get_neighbours(cells, y, x)
-                    if neighbours and random.random() < organism.grow_chance:
-                        organism.cells[neighbours[0], neighbours[1]] = 1
-                        cells[neighbours[0], neighbours[1]] = 1
-
-def update2(organisms, term):
-    """ Updates each organism (procreate, kill, decay). """
-    cells = np.zeros((term.height - 1, term.width - 1))
-
-    for organism in organisms:
-        cells += get_boundary_cells(organism)
-
-    for organism in organisms:
-        for cell in np.transpose(get_boundary_cells(organism).nonzero()):
+        for cell in np.transpose(get_boundary_cells(organism, term).nonzero()):
             neighbours = get_neighbours(cells, cell[0], cell[1])
             if neighbours:
                 organism.cells[neighbours[0], neighbours[1]] = 1
                 cells[neighbours[0], neighbours[1]] = 1
+
 
 def get_neighbours(cells, y, x):
     neighbours = []
@@ -130,7 +92,7 @@ def get_neighbours(cells, y, x):
 def main():
     term = Terminal()
     specimens = []
-    N = 4
+    N = 3
     colors = [term.on_green, term.on_red, term.on_blue, term.on_yellow]
     for idx in range(N):
         color = random.choice(range(len(colors)))
@@ -138,11 +100,11 @@ def main():
         del colors[color]
     with nested(term.fullscreen(), term.hidden_cursor()):
         while True:
-            update2(specimens, term)
+            update(specimens, term)
             draw2(specimens, term)
             stdout.flush()
             time.sleep(0.1)
-            #clear(term, height)
+            clear(term, term.height)
 
 
 def clear(term, height):
