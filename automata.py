@@ -11,6 +11,8 @@ class organism():
 
     def __init__(self, term, color, seed_x=None, seed_y=None):
         self.cells = np.zeros((term.height-1, term.width-1))
+        self.life = np.zeros((term.height-1, term.width-1))
+
         self.width = term.width
         self.height = term.height
         if seed_x:
@@ -23,16 +25,18 @@ class organism():
             y = random.randint(1, term.height-2)
 
         self.cells[y, x] = 1
+        self.life[y, x] = random.random() * 10
         self.grow_chance = random.random() * 0.5 + 0.1
         self.term = term
         self.color = color
+        self.last_update = time.time()
 
 
 def draw2(organisms, term):
     """ Draws all organisms. """
     for organism in organisms:
-        for cell in np.transpose(get_boundary_cells(organism, term).nonzero()):
-        #for cell in np.transpose(organism.cells.nonzero()):
+        #for cell in np.transpose(get_boundary_cells(organism, term).nonzero()):
+        for cell in np.transpose(organism.cells.nonzero()):
             with term.location(cell[1], cell[0]):
                 print organism.color(" ")
 
@@ -60,6 +64,13 @@ def fight(organisms, term):
     return targets
 
 
+def die(organisms):
+    for organism in organisms:
+        organism.life[organism.life > 0] -= time.time() - organism.last_update
+        organism.cells[organism.life < 0] = 0
+        organism.life[organism.life < 0] = 0
+
+
 def update(organisms, term):
     """ Updates each organism (procreate, kill, decay). """
     cells = get_all_cells(organisms, term)
@@ -67,9 +78,11 @@ def update(organisms, term):
     for organism in organisms:
         for cell in np.transpose(get_boundary_cells(organism, term).nonzero()):
             neighbours = get_neighbours(cells, cell[0], cell[1])
-            if neighbours:
+            if neighbours and random.random() < organism.grow_chance:
                 organism.cells[neighbours[0], neighbours[1]] = 1
+                organism.life[neighbours[0], neighbours[1]] = random.random() + 1
                 cells[neighbours[0], neighbours[1]] = 1
+                organism.last_update = time.time()
 
 
 def get_neighbours(cells, y, x):
@@ -102,8 +115,9 @@ def main():
         while True:
             update(specimens, term)
             draw2(specimens, term)
+            die(specimens)
             stdout.flush()
-            time.sleep(0.1)
+            time.sleep(0.5)
             clear(term, term.height)
 
 
