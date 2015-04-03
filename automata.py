@@ -10,7 +10,7 @@ import scipy.ndimage as scn
 class organism():
 
     def __init__(self, term, color, seed_x=None, seed_y=None):
-        self.cells = np.zeros((term.height-1, term.width-1))
+        self.cells = np.zeros((term.height-1, term.width-1), dtype=bool)
         self.life = np.zeros((term.height-1, term.width-1))
 
         self.width = term.width
@@ -40,10 +40,18 @@ class organism():
 def draw(organisms, term):
     """ Draws all organisms. """
     for organism in organisms:
-        #for cell in np.transpose(get_boundary_cells(organism, term).nonzero()):
+        # for cell in np.transpose(get_boundary_cells(organism,
+        # term).nonzero()):
         for cell in np.transpose(organism.boundary.nonzero()):
             with term.location(cell[1], cell[0]):
                 print organism.color(" ")
+
+
+def quick_draw(organisms, term):
+    """ Faster draw routine (ignores color) """
+    for c in np.transpose(get_boundary_cells_quick(organisms, term).nonzero()):
+        with term.location(c[1], c[0]):
+            print term.green("+")
 
 
 def get_all_cells(organisms, term):
@@ -54,7 +62,7 @@ def get_all_cells(organisms, term):
 
 
 def get_boundary_cells(organisms, term):
-    if type(organisms) == list:
+    if isinstance(organisms, list):
         cells = np.zeros((term.height - 1, term.width - 1))
         for organism in organisms:
             cells += get_boundary_cells(organism, term)
@@ -62,6 +70,13 @@ def get_boundary_cells(organisms, term):
     else:
         cells = organisms.cells
     return cells - scn.morphology.binary_erosion(cells > 0)
+
+
+def get_boundary_cells_quick(organisms, term):
+    boundary_cells = np.zeros((term.height - 1, term.width - 1))
+    for organism in organisms:
+        boundary_cells += organism.boundary
+    return boundary_cells
 
 
 def fight(organisms, term):
@@ -74,14 +89,10 @@ def kill_cell(organisms, y, x):
         organism.cells[y, x] = 0
 
 
-def attack(organisms, term):
-    all_cells = get_all_cells(organisms, term)
+def attack(organisms, all_cells, term):
     for organism in organisms:
-        #cells = all_cells - organism.boundary
-        #cells = all_cells - get_boundary_cells(organisms, term)
         cells = all_cells - organism.cells
-        #for cell in np.transpose(organism.boundary.nonzero()):
-        for cell in np.transpose(get_boundary_cells(organism, term).nonzero()):
+        for cell in np.transpose(organism.boundary.nonzero()):
             neighbour = get_neighbours(cells < 1, cell[0], cell[1])
             if neighbour and random.random() < organism.attack:
                 kill_cell(organisms, neighbour[0], neighbour[1])
@@ -107,6 +118,7 @@ def update(organisms, all_cells, term):
                 all_cells[neighbours[0], neighbours[1]] = 1
                 organism.last_update = time.time()
         organism.boundary = organism.get_boundary()
+    return all_cells
 
 def get_neighbours(cells, y, x):
     neighbours = []
@@ -128,21 +140,29 @@ def get_neighbours(cells, y, x):
 def main(N=4):
     term = Terminal()
     specimens = []
-    colors = [term.on_green, term.on_red, term.on_blue, term.on_yellow, term.on_white, term.on_magenta, term.on_cyan]
+    colors = [
+        term.on_green,
+        term.on_red,
+        term.on_blue,
+        term.on_yellow,
+        term.on_white,
+        term.on_magenta,
+        term.on_cyan]
     for idx in range(N):
         color = random.choice(range(len(colors)))
         specimens.append(organism(term, colors[color]))
         #del colors[color]
+    all_cells = get_all_cells(specimens, term)
     with nested(term.fullscreen(), term.hidden_cursor()):
         while True:
-            all_cells = get_all_cells(specimens, term)
-            update(specimens, all_cells, term)
+            all_cells = update(specimens, all_cells, term)
+            attack(specimens, all_cells, term)
             draw(specimens, term)
-            # die(specimens)
-            attack(specimens, term)
+            #quick_draw(specimens, term)
             sys.stdout.flush()
-            time.sleep(0.5)
             clear(term, term.height)
+            # die(specimens)
+            #time.sleep(0.1)
 
 
 def clear(term, height):
