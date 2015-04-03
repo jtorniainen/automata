@@ -1,7 +1,7 @@
 from blessings import Terminal
 from contextlib import nested
 import time
-from sys import stdout
+import sys
 import random
 import numpy as np
 import scipy.ndimage as scn
@@ -31,13 +31,17 @@ class organism():
         self.term = term
         self.color = color
         self.last_update = time.time()
+        self.boundary = self.get_boundary()
+
+    def get_boundary(self):
+        return self.cells - scn.morphology.binary_erosion(self.cells > 0)
 
 
-def draw2(organisms, term):
+def draw(organisms, term):
     """ Draws all organisms. """
     for organism in organisms:
         #for cell in np.transpose(get_boundary_cells(organism, term).nonzero()):
-        for cell in np.transpose(organism.cells.nonzero()):
+        for cell in np.transpose(organism.boundary.nonzero()):
             with term.location(cell[1], cell[0]):
                 print organism.color(" ")
 
@@ -91,19 +95,18 @@ def die(organisms):
         organism.life[organism.life < 0] = 0
 
 
-def update(organisms, term):
+def update(organisms, all_cells, term):
     """ Updates each organism (procreate, kill, decay). """
-    cells = get_all_cells(organisms, term)
 
     for organism in organisms:
-        for cell in np.transpose(get_boundary_cells(organism, term).nonzero()):
-            neighbours = get_neighbours(cells, cell[0], cell[1])
+        for cell in np.transpose(organism.boundary.nonzero()):
+            neighbours = get_neighbours(all_cells, cell[0], cell[1])
             if neighbours and random.random() < organism.grow_chance:
                 organism.cells[neighbours[0], neighbours[1]] = 1
                 # organism.life[neighbours[0], neighbours[1]] = random.random() + 1
-                cells[neighbours[0], neighbours[1]] = 1
+                all_cells[neighbours[0], neighbours[1]] = 1
                 organism.last_update = time.time()
-
+        organism.boundary = organism.get_boundary()
 
 def get_neighbours(cells, y, x):
     neighbours = []
@@ -122,22 +125,22 @@ def get_neighbours(cells, y, x):
         return neighbours
 
 
-def main():
+def main(N=4):
     term = Terminal()
     specimens = []
-    N = 7
     colors = [term.on_green, term.on_red, term.on_blue, term.on_yellow, term.on_white, term.on_magenta, term.on_cyan]
     for idx in range(N):
         color = random.choice(range(len(colors)))
         specimens.append(organism(term, colors[color]))
-        del colors[color]
+        #del colors[color]
     with nested(term.fullscreen(), term.hidden_cursor()):
         while True:
-            update(specimens, term)
-            draw2(specimens, term)
+            all_cells = get_all_cells(specimens, term)
+            update(specimens, all_cells, term)
+            draw(specimens, term)
             # die(specimens)
             attack(specimens, term)
-            stdout.flush()
+            sys.stdout.flush()
             time.sleep(0.5)
             clear(term, term.height)
 
@@ -148,4 +151,7 @@ def clear(term, height):
         print term.move(y, 0) + term.clear_eol,
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 2:
+        main(int(sys.argv[1]))
+    else:
+        main()
