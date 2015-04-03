@@ -9,39 +9,33 @@ import scipy.ndimage as scn
 
 class organism():
 
-    def __init__(self, term, color, seed_x=None, seed_y=None):
-        self.cells = np.zeros((term.height-1, term.width-1), dtype=bool)
-        self.life = np.zeros((term.height-1, term.width-1))
-
-        self.width = term.width
-        self.height = term.height
+    def __init__(self, width, height, color, seed_x=None, seed_y=None):
+        self.cells = np.zeros((height, width))
+        self.width = width
+        self.height = height
         if seed_x:
             x = seed_x
         else:
-            x = random.randint(1, term.width-2)
+            x = random.randint(1, width - 1)
         if seed_y:
             y = seed_y
         else:
-            y = random.randint(1, term.height-2)
+            y = random.randint(1, height - 1)
 
         self.cells[y, x] = 1
-        self.life[y, x] = random.random() * 10
         self.grow_chance = random.random() * 0.5 + 0.1
         self.attack = random.random()
-        self.term = term
         self.color = color
-        self.last_update = time.time()
         self.boundary = self.get_boundary()
 
     def get_boundary(self):
+        """ Utility function for calcualting organism borders. """
         return self.cells - scn.morphology.binary_erosion(self.cells > 0)
 
 
 def draw(organisms, term):
     """ Draws all organisms. """
     for organism in organisms:
-        # for cell in np.transpose(get_boundary_cells(organism,
-        # term).nonzero()):
         for cell in np.transpose(organism.boundary.nonzero()):
             with term.location(cell[1], cell[0]):
                 print organism.color(" ")
@@ -49,47 +43,34 @@ def draw(organisms, term):
 
 def quick_draw(organisms, term):
     """ Faster draw routine (ignores color) """
-    for c in np.transpose(get_boundary_cells_quick(organisms, term).nonzero()):
+    for c in np.transpose(get_all_boundary_cells(organisms, term).nonzero()):
         with term.location(c[1], c[0]):
             print term.green("+")
 
 
 def get_all_cells(organisms, term):
+    """ Get a matrix containing cells from all organisms. """
     cells = np.zeros((term.height - 1, term.width - 1))
     for organism in organisms:
         cells += organism.cells
     return cells
 
 
-def get_boundary_cells(organisms, term):
-    if isinstance(organisms, list):
-        cells = np.zeros((term.height - 1, term.width - 1))
-        for organism in organisms:
-            cells += get_boundary_cells(organism, term)
-        cells = cells > 0
-    else:
-        cells = organisms.cells
-    return cells - scn.morphology.binary_erosion(cells > 0)
-
-
-def get_boundary_cells_quick(organisms, term):
+def get_all_boundary_cells(organisms, term):
+    """ Get matrix of boundary cells of all organisms. """
     boundary_cells = np.zeros((term.height - 1, term.width - 1))
     for organism in organisms:
         boundary_cells += organism.boundary
-    return boundary_cells
-
-
-def fight(organisms, term):
-    targets = get_boundary_cells(organism)
-    return targets
 
 
 def kill_cell(organisms, y, x):
+    """ Remove specified cell. """
     for organism in organisms:
         organism.cells[y, x] = 0
 
 
 def attack(organisms, all_cells, term):
+    """ All boundary cells attempt to attack one enemy cell (if in range). """
     for organism in organisms:
         cells = all_cells - organism.cells
         for cell in np.transpose(organism.boundary.nonzero()):
@@ -100,6 +81,7 @@ def attack(organisms, all_cells, term):
 
 
 def die(organisms):
+    """ Check for expired cells (currently not in use). """
     for organism in organisms:
         organism.life[organism.life > 0] -= time.time() - organism.last_update
         organism.cells[organism.life < 0] = 0
@@ -114,13 +96,13 @@ def update(organisms, all_cells, term):
             neighbours = get_neighbours(all_cells, cell[0], cell[1])
             if neighbours and random.random() < organism.grow_chance:
                 organism.cells[neighbours[0], neighbours[1]] = 1
-                # organism.life[neighbours[0], neighbours[1]] = random.random() + 1
                 all_cells[neighbours[0], neighbours[1]] = 1
-                organism.last_update = time.time()
         organism.boundary = organism.get_boundary()
     return all_cells
 
+
 def get_neighbours(cells, y, x):
+    """ Utility function for getting neighbouring cells. """
     neighbours = []
     if x > 1 and cells[y, x - 1] == 0:
         neighbours.append((y, x - 1))
@@ -138,6 +120,7 @@ def get_neighbours(cells, y, x):
 
 
 def main(N=4):
+    """ Main program loop. """
     term = Terminal()
     specimens = []
     colors = [
@@ -150,8 +133,14 @@ def main(N=4):
         term.on_cyan]
     for idx in range(N):
         color = random.choice(range(len(colors)))
-        specimens.append(organism(term, colors[color]))
-        #del colors[color]
+        specimens.append(
+            organism(
+                term.width -
+                1,
+                term.height -
+                1,
+                colors[color]))
+
     all_cells = get_all_cells(specimens, term)
     with nested(term.fullscreen(), term.hidden_cursor()):
         while True:
@@ -162,7 +151,7 @@ def main(N=4):
             sys.stdout.flush()
             clear(term, term.height)
             # die(specimens)
-            #time.sleep(0.1)
+            time.sleep(0.05)
 
 
 def clear(term, height):
