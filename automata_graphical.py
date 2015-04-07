@@ -7,37 +7,31 @@ import sys
 
 class Grid(object):
 
+    """ Grid-object for drawing cells. """
+
     def __init__(self, width, height, num_x, num_y, screen):
+        """ Grid initializer. """
         self.screen = screen
         self.cell_w = width / num_x
         self.cell_h = height / num_y
         self.num_x = num_x
         self.num_y = num_y
 
-    def draw_cell(self, x, y, color):
-        x = x * self.cell_w
-        y = y * self.cell_h
-        pygame.draw.rect(
-            self.screen, color, [
-                x, y, self.cell_w, self.cell_h])
-
     def fill_cell(self, x, y, color):
+        """ Draw cell at x,y with specified color. """
         x = x * self.cell_w
         y = y * self.cell_h
         self.screen.fill(color, rect=(x, y, self.cell_w, self.cell_h))
 
-    def display(self):
-        for x in range(self.num_x):
-            for y in range(self.num_y):
-                self.draw_cell(x, y)
-
 
 def draw(grid, organism):
+    """ Draw organisms. """
     for cell in np.transpose(organism.boundary.nonzero()):
         grid.fill_cell(cell[1], cell[0], organism.color)
 
 
 def check_extinction(organisms):
+    """ Remove dead organisms. """
     survivors = []
     for idx in range(len(organisms)):
         if np.sum(organisms[idx].cells):
@@ -46,7 +40,7 @@ def check_extinction(organisms):
 
 
 def main(N=10):
-    # Initialize pygame and grid-object
+    """ Main-loop. """
     width = 800
     height = 600
     pygame.init()

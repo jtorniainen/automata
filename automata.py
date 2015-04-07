@@ -5,8 +5,10 @@ import scipy.ndimage as scn
 
 
 class Organism():
+    """ Organism class. """
 
     def __init__(self, width, height, color, seed_x=None, seed_y=None):
+        """ Initialize organism. """
         self.cells = np.zeros((height, width))
         self.width = width
         self.height = height
@@ -46,7 +48,7 @@ def get_all_boundary_cells(organisms, width, height):
 
 
 def kill_cell(organisms, y, x):
-    """ Remove specified cell. """
+    """ Purge specified cell. """
     for organism in organisms:
         organism.cells[y, x] = 0
 
