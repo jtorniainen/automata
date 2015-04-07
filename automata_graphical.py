@@ -2,6 +2,7 @@ import numpy as np
 import pygame
 import automata
 from random import randint
+import sys
 
 
 class Grid(object):
@@ -21,7 +22,9 @@ class Grid(object):
                 x, y, self.cell_w, self.cell_h])
 
     def fill_cell(self, x, y, color):
-        pass
+        x = x * self.cell_w
+        y = y * self.cell_h
+        self.screen.fill(color, rect=(x, y, self.cell_w, self.cell_h))
 
     def display(self):
         for x in range(self.num_x):
@@ -31,7 +34,7 @@ class Grid(object):
 
 def draw(grid, organism):
     for cell in np.transpose(organism.boundary.nonzero()):
-        grid.draw_cell(cell[1], cell[0], organism.color)
+        grid.fill_cell(cell[1], cell[0], organism.color)
 
 
 def check_extinction(organisms):
@@ -42,7 +45,7 @@ def check_extinction(organisms):
     return survivors
 
 
-def main():
+def main(N=10):
     # Initialize pygame and grid-object
     width = 800
     height = 600
@@ -51,12 +54,10 @@ def main():
     clock = pygame.time.Clock()
 
     done = False
-    finished = False
     n_x = 100
     n_y = 100
     grid = Grid(width, height, n_x, n_y, screen)
     specimens = []
-    N = 5
     for x in range(N):
         color = (randint(10, 255), randint(10, 255), randint(10, 255))
         specimens.append(automata.Organism(n_x - 1, n_y - 1, color))
@@ -67,16 +68,19 @@ def main():
             if event.type == pygame.QUIT:
                 done = True
         screen.fill((0, 0, 0))
-        all_cells = automata.update(specimens, all_cells)
-        automata.attack2(specimens, all_cells)
+        all_cells = automata.grow(specimens, all_cells)
+        automata.attack(specimens, all_cells)
         for specimen in specimens:
             draw(grid, specimen)
         specimens = check_extinction(specimens)
         if len(specimens) == 1:
-            finished = True
+            pass
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(30)
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) == 2:
+        main(N=int(sys.argv[1]))
+    else:
+        main()
