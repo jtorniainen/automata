@@ -7,7 +7,7 @@ import numpy as np
 import scipy.ndimage as scn
 
 
-class organism():
+class Organism():
 
     def __init__(self, width, height, color, seed_x=None, seed_y=None):
         self.cells = np.zeros((height, width))
@@ -24,7 +24,7 @@ class organism():
 
         self.cells[y, x] = 1
         self.grow_chance = random.random() * 0.5 + 0.1
-        self.attack = random.random()
+        self.attack = random.random() * 0.5 + 0.05
         self.color = color
         self.boundary = self.get_boundary()
 
@@ -41,24 +41,17 @@ def draw(organisms, term):
                 print organism.color(" ")
 
 
-def quick_draw(organisms, term):
-    """ Faster draw routine (ignores color) """
-    for c in np.transpose(get_all_boundary_cells(organisms, term).nonzero()):
-        with term.location(c[1], c[0]):
-            print term.green("+")
-
-
-def get_all_cells(organisms, term):
+def get_all_cells(organisms, width, height):
     """ Get a matrix containing cells from all organisms. """
-    cells = np.zeros((term.height - 1, term.width - 1))
+    cells = np.zeros((height - 1, width - 1))
     for organism in organisms:
         cells += organism.cells
     return cells
 
 
-def get_all_boundary_cells(organisms, term):
+def get_all_boundary_cells(organisms, width, height):
     """ Get matrix of boundary cells of all organisms. """
-    boundary_cells = np.zeros((term.height - 1, term.width - 1))
+    boundary_cells = np.zeros((height - 1, width - 1))
     for organism in organisms:
         boundary_cells += organism.boundary
 
@@ -69,7 +62,7 @@ def kill_cell(organisms, y, x):
         organism.cells[y, x] = 0
 
 
-def attack(organisms, all_cells, term):
+def attack(organisms, all_cells):
     """ All boundary cells attempt to attack one enemy cell (if in range). """
     for organism in organisms:
         cells = all_cells - organism.cells
@@ -88,7 +81,7 @@ def die(organisms):
         organism.life[organism.life < 0] = 0
 
 
-def update(organisms, all_cells, term):
+def update(organisms, all_cells):
     """ Updates each organism (procreate, kill, decay). """
 
     for organism in organisms:
@@ -119,10 +112,18 @@ def get_neighbours(cells, y, x):
         return neighbours
 
 
+def clear(term, height):
+    """Clear the droppings of the given board."""
+    for y in xrange(height):
+        print term.move(y, 0) + term.clear_eol,
+
+
 def main(N=4):
     """ Main program loop. """
     term = Terminal()
     specimens = []
+    width = term.width
+    height = term.height
     colors = [
         term.on_green,
         term.on_red,
@@ -134,30 +135,24 @@ def main(N=4):
     for idx in range(N):
         color = random.choice(range(len(colors)))
         specimens.append(
-            organism(
+            Organism(
                 term.width -
                 1,
                 term.height -
                 1,
                 colors[color]))
 
-    all_cells = get_all_cells(specimens, term)
+    all_cells = get_all_cells(specimens, width, height)
     with nested(term.fullscreen(), term.hidden_cursor()):
         while True:
-            all_cells = update(specimens, all_cells, term)
-            attack(specimens, all_cells, term)
+            all_cells = update(specimens, all_cells)
+            attack(specimens, all_cells)
             draw(specimens, term)
-            #quick_draw(specimens, term)
             sys.stdout.flush()
             clear(term, term.height)
             # die(specimens)
             time.sleep(0.05)
 
-
-def clear(term, height):
-    """Clear the droppings of the given board."""
-    for y in xrange(height):
-        print term.move(y, 0) + term.clear_eol,
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
