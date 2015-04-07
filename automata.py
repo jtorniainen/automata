@@ -24,7 +24,7 @@ class Organism():
 
         self.cells[y, x] = 1
         self.grow_chance = random.random() * 0.5 + 0.1
-        self.attack = random.random() * 0.5 + 0.05
+        self.attack = random.random()
         self.color = color
         self.boundary = self.get_boundary()
 
@@ -72,6 +72,17 @@ def attack(organisms, all_cells):
                 kill_cell(organisms, neighbour[0], neighbour[1])
                 organism.cells[neighbour[0], neighbour[1]] = 1
 
+
+def attack2(organisms, all_cells):
+    """ This is supposed to be a faster attack routine (with scipy). """
+    for organism in organisms:
+        attack_zone = scn.binary_dilation(organism.cells) - organism.cells
+        for cell in np.transpose(attack_zone.nonzero()):
+            if all_cells[cell[0], cell[1]] and random.random() < organism.attack:
+                kill_cell(organisms, cell[0], cell[1])
+                organism.cells[cell[0], cell[1]] = 1
+
+        #organism.boundary = organism.get_boundary()
 
 def die(organisms):
     """ Check for expired cells (currently not in use). """
