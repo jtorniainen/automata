@@ -9,7 +9,7 @@ class Organism():
 
     def __init__(self, width, height, color, seed_x=None, seed_y=None):
         """ Initialize organism. """
-        self.cells = np.zeros((height, width))
+        self.cells = np.zeros((height, width), dtype=bool)
         self.width = width
         self.height = height
         if seed_x:
@@ -32,6 +32,14 @@ class Organism():
         return self.cells - scn.morphology.binary_erosion(self.cells > 0)
 
 
+def get_all_cells2(organisms, width, height):
+    """ Get a matrix containing cells from all organisms. """
+    cells = np.zeros((height - 1, width - 1), dtype=bool)
+    for organism in organisms:
+        cells = np.bitwise_and(organism.cells, cells)
+    return cells
+
+
 def get_all_cells(organisms, width, height):
     """ Get a matrix containing cells from all organisms. """
     cells = np.zeros((height - 1, width - 1))
@@ -52,6 +60,9 @@ def kill_cell(organisms, y, x):
     for organism in organisms:
         organism.cells[y, x] = 0
 
+def kill_cell2(organisms, kill_list):
+    for organism in organisms:
+        organism.cells[kill_list] = 0
 
 def attack(organisms, all_cells):
     """ This is supposed to be a faster attack routine (with scipy). """
@@ -61,6 +72,19 @@ def attack(organisms, all_cells):
             if all_cells[cell[0], cell[1]] and random() < organism.attack:
                 kill_cell(organisms, cell[0], cell[1])
                 organism.cells[cell[0], cell[1]] = 1
+
+
+def attack2(organisms, all_cells):
+    """ Even faster attack routine (more scipy!)"""
+    all_cells = all_cells > 0
+    for organism in organisms:
+        attack_zone = scn.binary_dilation(organism.cells) - organism.cells
+        attack_zone = np.bitwise_and(attack_zone, all_cells)
+        attack_chance = np.zeros(np.shape(attack_zone)) + 2
+        attack_chance[attack_zone] = np.random.random(np.sum(attack_zone))
+        attacks = attack_chance < organism.attack
+        kill_cell2(organisms, attacks)
+        organism.cells[attacks] = 1
 
 
 def die(organisms):

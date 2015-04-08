@@ -41,14 +41,14 @@ def check_extinction(organisms):
 
 def main(N=10):
     """ Main-loop. """
-    width = 800
+    width = 1000
     height = 600
     pygame.init()
     screen = pygame.display.set_mode((width, height))
     clock = pygame.time.Clock()
 
     done = False
-    n_x = 100
+    n_x = 200
     n_y = 100
     grid = Grid(width, height, n_x, n_y, screen)
     specimens = []
@@ -63,7 +63,8 @@ def main(N=10):
                 done = True
         screen.fill((0, 0, 0))
         all_cells = automata.grow(specimens, all_cells)
-        automata.attack(specimens, all_cells)
+        #automata.attack(specimens, all_cells)
+        automata.attack2(specimens, all_cells)
         for specimen in specimens:
             draw(grid, specimen)
         specimens = check_extinction(specimens)
@@ -71,7 +72,7 @@ def main(N=10):
             pass
 
         pygame.display.flip()
-        clock.tick(30)
+        clock.tick(60)
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
