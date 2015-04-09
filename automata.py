@@ -92,6 +92,15 @@ def die(organisms):
         organism.life[organism.life < 0] = 0
 
 
+def check_extinction(organisms):
+    """ Remove dead organisms. """
+    survivors = []
+    for idx in range(len(organisms)):
+        if np.sum(organisms[idx].cells):
+            survivors.append(organisms[idx])
+    return survivors
+
+
 def grow(organisms, all_cells):
     """ Trying to optimize this too. """
     for organism in organisms:

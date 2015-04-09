@@ -30,40 +30,33 @@ def draw(grid, organism):
         grid.fill_cell(cell[1], cell[0], organism.color)
 
 
-def check_extinction(organisms):
-    """ Remove dead organisms. """
-    survivors = []
-    for idx in range(len(organisms)):
-        if np.sum(organisms[idx].cells):
-            survivors.append(organisms[idx])
-    return survivors
-
-
 def generate_template(width, height, r):
+    """ Generates a circular growth area template. """
     template = np.ones((height, width), dtype=bool)
     center = np.array((height / 2.0, width / 2.0))
     for cell in np.transpose(template.nonzero()):
-        #r_tmp = r + randint(-2, 2)
-        r_tmp = r
         dist = np.linalg.norm(cell - center)
-        if dist > r_tmp:
+        if dist > r:
             template[cell[0], cell[1]] = False
     return template
 
 
 def main(N=10):
     """ Main-loop. """
+    # Initialize pygame
     width = 1360
     height = 768
     pygame.init()
-
     screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
     clock = pygame.time.Clock()
 
+    # Initialize drawing area
     done = False
     n_x = 200
     n_y = 200
     grid = Grid(width, height, n_x, n_y, screen)
+
+    # Initialize specimens
     specimens = []
     template = generate_template(n_x - 1, n_y - 1, 90)
     for x in range(N):
@@ -71,7 +64,11 @@ def main(N=10):
         seed = choice(np.transpose(template.nonzero()))
         specimens.append(automata.Organism(n_x - 1, n_y - 1, color, seed=seed))
     all_cells = automata.get_all_cells(specimens, n_x, n_y)
+
+    # Start main-loop
     while not done:
+
+        # Deal with events
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
@@ -79,16 +76,18 @@ def main(N=10):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     done = True
-        screen.fill((10, 0, 0))
+
+        # Update specimens
         all_cells = automata.grow2(specimens, all_cells, template)
         automata.attack(specimens, all_cells)
-        #automata.attack2(specimens, all_cells)
+        specimens = automata.check_extinction(specimens)
+
+        # Draw cells
+        screen.fill((10, 0, 0))
         for specimen in specimens:
             draw(grid, specimen)
-        specimens = check_extinction(specimens)
         if len(specimens) == 1:
             pass
-
         pygame.display.flip()
         clock.tick(60)
 
