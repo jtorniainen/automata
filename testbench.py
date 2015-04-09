@@ -4,7 +4,7 @@ import timeit
 
 
 def run_simulation_1():
-    n = 100
+    n = 200
     specimens = create_specimens()
     all_cells = automata.get_all_cells(specimens, 200, 100)
     for itr in range(n):
@@ -13,7 +13,7 @@ def run_simulation_1():
 
 
 def run_simulation_2():
-    n = 100
+    n = 200
     specimens = create_specimens()
     all_cells = automata.get_all_cells(specimens, 200, 100)
     for itr in range(n):
@@ -28,7 +28,7 @@ def create_specimens():
     return specimens
 
 
-a = timeit.timeit(run_simulation_1, number=10)
-b = timeit.timeit(run_simulation_2, number=10)
+a = timeit.timeit(run_simulation_1, number=5)
+b = timeit.timeit(run_simulation_2, number=5)
 print("Simulation 01: %0.2f" % a)
 print("Simulation 02: %0.2f" % b)

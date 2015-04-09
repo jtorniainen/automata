@@ -7,18 +7,16 @@ import scipy.ndimage as scn
 class Organism():
     """ Organism class. """
 
-    def __init__(self, width, height, color, seed_x=None, seed_y=None):
+    def __init__(self, width, height, color, seed_xy):
         """ Initialize organism. """
         self.cells = np.zeros((height, width), dtype=bool)
         self.width = width
         self.height = height
-        if seed_x:
-            x = seed_x
+        if seed_xy.any():
+            x = seed_xy[0]
+            y = seed_xy[1]
         else:
             x = randint(1, width - 1)
-        if seed_y:
-            y = seed_y
-        else:
             y = randint(1, height - 1)
 
         self.cells[y, x] = 1
@@ -99,6 +97,18 @@ def grow(organisms, all_cells):
     """ Trying to optimize this too. """
     for organism in organisms:
         grow_zone = scn.binary_dilation(organism.cells) - organism.cells
+        for cell in np.transpose(grow_zone.nonzero()):
+            if not all_cells[cell[0], cell[1]] and random() < organism.grow:
+                organism.cells[cell[0], cell[1]] = 1
+                all_cells[cell[0], cell[1]] = 1
+        organism.boundary = organism.get_boundary()
+    return all_cells
+
+
+def grow2(organisms, all_cells, template):
+    """ Trying to optimize this too. """
+    for organism in organisms:
+        grow_zone = np.bitwise_and(scn.binary_dilation(organism.cells) - organism.cells, template)
         for cell in np.transpose(grow_zone.nonzero()):
             if not all_cells[cell[0], cell[1]] and random() < organism.grow:
                 organism.cells[cell[0], cell[1]] = 1
