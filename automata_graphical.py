@@ -41,9 +41,12 @@ def check_extinction(organisms):
 
 def generate_template(width, height, r):
     template = np.ones((height, width), dtype=bool)
+    center = np.array((height / 2.0, width / 2.0))
     for cell in np.transpose(template.nonzero()):
-        r_tmp = r + randint(-2,2)
-        if np.sqrt(pow(cell[0]-height / 2.0, 2) + pow(cell[1] - width / 2.0, 2)) > r_tmp:
+        #r_tmp = r + randint(-2, 2)
+        r_tmp = r
+        dist = np.linalg.norm(cell - center)
+        if dist > r_tmp:
             template[cell[0], cell[1]] = False
     return template
 
@@ -58,17 +61,15 @@ def main(N=10):
     clock = pygame.time.Clock()
 
     done = False
-    #n_x = 100
-    #n_y = 100
     n_x = 200
     n_y = 200
     grid = Grid(width, height, n_x, n_y, screen)
     specimens = []
-    template = generate_template(n_x - 1, n_y - 1, 80)
+    template = generate_template(n_x - 1, n_y - 1, 90)
     for x in range(N):
         color = (randint(10, 255), randint(10, 255), randint(10, 255))
         seed = choice(np.transpose(template.nonzero()))
-        specimens.append(automata.Organism(n_x - 1, n_y - 1, color, seed_xy=seed))
+        specimens.append(automata.Organism(n_x - 1, n_y - 1, color, seed=seed))
     all_cells = automata.get_all_cells(specimens, n_x, n_y)
     while not done:
         events = pygame.event.get()
