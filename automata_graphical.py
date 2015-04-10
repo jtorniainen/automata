@@ -12,8 +12,8 @@ class Grid(object):
     def __init__(self, width, height, num_x, num_y, screen):
         """ Grid initializer. """
         self.screen = screen
-        self.cell_w = int(round(float(width) / float(num_x)))
-        self.cell_h = int(round(float(height) / float(num_y)))
+        self.cell_w = int(np.floor(float(width) / float(num_x)))
+        self.cell_h = int(np.floor(float(height) / float(num_y)))
         self.num_x = num_x
         self.num_y = num_y
 
@@ -52,13 +52,13 @@ def main(N=10):
 
     # Initialize drawing area
     done = False
-    n_x = 200
-    n_y = 200
+    n_x = 100
+    n_y = 100
     grid = Grid(width, height, n_x, n_y, screen)
 
     # Initialize specimens
     specimens = []
-    template = generate_template(n_x - 1, n_y - 1, 90)
+    template = generate_template(n_x - 1, n_y - 1, 50)
     for x in range(N):
         color = (randint(10, 255), randint(10, 255), randint(10, 255))
         seed = choice(np.transpose(template.nonzero()))
