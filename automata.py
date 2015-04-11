@@ -26,7 +26,6 @@ class Organism():
         """ Utility function for calcualting organism borders. """
         return self.cells - scn.morphology.binary_erosion(self.cells > 0)
 
-
 def get_all_cells2(organisms, width, height):
     """ Get a matrix containing cells from all organisms. """
     cells = np.zeros((height - 1, width - 1), dtype=bool)
