@@ -17,7 +17,7 @@ class Organism():
         y = seed[1]
 
         self.cells[y, x] = 1
-        self.grow = random() * 0.5 + 0.1
+        self.grow = random() * 0.5
         self.attack = random()
         self.color = color
         self.boundary = self.get_boundary()

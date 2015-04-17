@@ -44,26 +44,25 @@ def generate_template(width, height, r):
 def main(N=10):
     """ Main-loop. """
     # Initialize pygame
-    width = 1360
+    width = 768
     height = 768
     pygame.init()
     screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
     clock = pygame.time.Clock()
+    done = False
 
     # Initialize drawing area
-    done = False
-    n_x = 100
-    n_y = 100
-    grid = Grid(width, height, n_x, n_y, screen)
+    SIZE = 128
+    grid = Grid(width, height, SIZE, SIZE, screen)
 
     # Initialize specimens
     specimens = []
-    template = generate_template(n_x - 1, n_y - 1, 50)
+    template = generate_template(SIZE - 1, SIZE - 1, SIZE / 2.0)
     for x in range(N):
-        color = (randint(10, 255), randint(10, 255), randint(10, 255))
+        color = (randint(0, 255), randint(0, 10), randint(0, 10))
         seed = choice(np.transpose(template.nonzero()))
-        specimens.append(automata.Organism(n_x - 1, n_y - 1, color, seed=seed))
-    all_cells = automata.get_all_cells(specimens, n_x, n_y)
+        specimens.append(automata.Organism(SIZE - 1, SIZE - 1, color, seed))
+    all_cells = automata.get_all_cells(specimens, SIZE, SIZE)
 
     # Start main-loop
     while not done:
@@ -83,7 +82,7 @@ def main(N=10):
         specimens = automata.check_extinction(specimens)
 
         # Draw cells
-        screen.fill((10, 0, 0))
+        screen.fill((0, 0, 0))
         for specimen in specimens:
             draw(grid, specimen)
         if len(specimens) == 1:

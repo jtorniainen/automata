@@ -27,6 +27,7 @@ class Culture():
         else:
             self.cells = np.dstack((self.cells, new_cells))
 
+        # Add parameters for new organism
         self.grow.append(random.random())
         self.attack.append(random.random())
         self.color.append((random.random(), random.random(), random.random()))
