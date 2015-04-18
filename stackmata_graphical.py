@@ -64,6 +64,7 @@ def main(N=10):
 
         # Update specimens
         culture.growth()
+        culture.fight()
         # Draw cells
         draw(grid, culture)
 

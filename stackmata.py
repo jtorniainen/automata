@@ -37,18 +37,20 @@ class Culture():
         self.grow.append(random.random() * .5)
         self.attack.append(random.random())
         self.color.append((random.randint(0, 255),
-                           random.randint(0, 255),
-                           random.randint(0, 255)))
+                           random.randint(0, 10),
+                           random.randint(0, 10)))
 
     def generate_template(self, radius):
+        """ Generates a circular template to determine valid growing areas. """
         template = np.zeros((self.height, self.width), dtype=bool)
-        cx, cy = self.width/2, self.height/2  # The center of circle
+        cx, cy = self.width / 2, self.height / 2  # The center of circle
         y, x = np.ogrid[-radius: radius, -radius: radius]
         index = x**2 + y**2 <= radius**2
-        template[cy-radius:cy+radius, cx-radius:cx+radius][index] = True
+        template[cy-radius:cy + radius, cx-radius:cx + radius][index] = True
         return template
 
     def update_all_cells(self):
+        """ Get mask of all current cells. """
         self.all_cells = np.sum(self.cells, axis=2)
 
     def get_boundary(self, cells):
@@ -60,10 +62,29 @@ class Culture():
         for c in range(self.boundary.shape[-1]):
             area = np.bitwise_and(
                 nd.binary_dilation(self.cells[..., c]) - self.cells[..., c],
-                np.invert(self.all_cells)).astype(float) * self.template
+                np.invert(self.all_cells)) * self.template
             area[area > 0] = np.random.random(np.sum(area)) < self.grow[c]
             self.cells[..., c] += area
             self.boundary[..., c] = (self.cells[..., c] -
                                      nd.binary_erosion(self.cells[..., c]))
             self.all_cells = np.bitwise_or(self.all_cells,
                                            self.boundary[..., c])
+
+    def decay(self):
+        """ Removes expired cells. """
+        pass
+
+    def clear_cells(self, array):
+        for c in range(self.cells.shape[-1]):
+            self.cells[..., c] = self.cells[..., c] * np.invert(array)
+
+    def fight(self):
+        for c in range(self.cells.shape[-1]):
+            area = np.bitwise_and(nd.binary_dilation(self.cells[..., c]) -
+                                  self.cells[..., c],
+                                  self.all_cells)
+            area[area > 0] = np.random.random(np.sum(area)) < self.attack[c]
+            self.clear_cells(area.astype(bool))
+            self.cells[..., c] += area
+            self.boundary[..., c] = (self.cells[..., c] -
+                                     nd.binary_erosion(self.cells[..., c]))
