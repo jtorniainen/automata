@@ -33,9 +33,11 @@ class Culture():
             self.all_cells = np.sum(self.cells, axis=2)
 
         # Add parameters for new organism
-        self.grow.append(random.random())
+        self.grow.append(random.random() * .5)
         self.attack.append(random.random())
-        self.color.append((random.random(), random.random(), random.random()))
+        self.color.append((random.randint(0, 255),
+                           random.randint(0, 255),
+                           random.randint(0, 255)))
 
     def update_all_cells(self):
         self.all_cells = np.sum(self.cells, axis=2)
@@ -45,12 +47,14 @@ class Culture():
         return cells - nd.binary_erosion(cells)
 
     def growth(self):
-        """ Grows each organism according to grow chance. """
+        """ Grows each organism according to grow chance and template. """
         for c in range(self.boundary.shape[-1]):
-            area = nd.binary_dilation(self.cells[..., c]) - self.cells[..., c]
-            area = np.bitwise_and(area, np.invert(self.all_cells)).astype(float)
+            area = np.bitwise_and(nd.binary_dilation(self.cells[..., c]) -
+                                  self.cells[..., c],
+                                  np.invert(self.all_cells)).astype(float)
             area[area > 0] = np.random.random(np.sum(area)) < self.grow[c]
             self.cells[..., c] += area
-            self.boundary = (self.cells[..., c] -
-                             nd.binary_erosion(self.cells[..., c]))
-            self.update_all_cells()
+            self.boundary[..., c] = (self.cells[..., c] -
+                                     nd.binary_erosion(self.cells[..., c]))
+            self.all_cells = np.bitwise_or(self.all_cells,
+                                           self.boundary[..., c])
