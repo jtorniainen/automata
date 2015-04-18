@@ -16,6 +16,7 @@ class Culture():
         self.color = []
         self.empty = True
         self.all_cells = np.zeros((self.height, self.width), dtype=bool)
+        self.template = self.generate_template(64)
 
     def add_organism(self, seed):
         """ Add new organism to the stack """
@@ -39,6 +40,14 @@ class Culture():
                            random.randint(0, 255),
                            random.randint(0, 255)))
 
+    def generate_template(self, radius):
+        template = np.zeros((self.height, self.width), dtype=bool)
+        cx, cy = self.width/2, self.height/2  # The center of circle
+        y, x = np.ogrid[-radius: radius, -radius: radius]
+        index = x**2 + y**2 <= radius**2
+        template[cy-radius:cy+radius, cx-radius:cx+radius][index] = True
+        return template
+
     def update_all_cells(self):
         self.all_cells = np.sum(self.cells, axis=2)
 
@@ -49,9 +58,9 @@ class Culture():
     def growth(self):
         """ Grows each organism according to grow chance and template. """
         for c in range(self.boundary.shape[-1]):
-            area = np.bitwise_and(nd.binary_dilation(self.cells[..., c]) -
-                                  self.cells[..., c],
-                                  np.invert(self.all_cells)).astype(float)
+            area = np.bitwise_and(
+                nd.binary_dilation(self.cells[..., c]) - self.cells[..., c],
+                np.invert(self.all_cells)).astype(float) * self.template
             area[area > 0] = np.random.random(np.sum(area)) < self.grow[c]
             self.cells[..., c] += area
             self.boundary[..., c] = (self.cells[..., c] -
