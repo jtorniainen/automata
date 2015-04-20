@@ -42,7 +42,7 @@ def main(N=10):
     done = False
 
     # Initialize drawing area
-    SIZE = 128
+    SIZE = 4
     grid = Grid(width, height, SIZE, SIZE, screen)
 
     culture = stackmata.Culture(SIZE, SIZE)
@@ -65,11 +65,12 @@ def main(N=10):
         # Update specimens
         culture.growth()
         culture.fight()
+        culture.decay()
         # Draw cells
         draw(grid, culture)
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(1)
 
 
 if __name__ == '__main__':

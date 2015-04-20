@@ -18,7 +18,8 @@ class Culture():
         self.empty = True
         self.all_cells = np.zeros((self.height, self.width), dtype=bool)
         self.life = []
-        self.template = self.generate_template(64)
+        self.template = self.generate_template(width/2)
+        self.last_update = time.time()
 
     def add_organism(self, seed):
         """ Add new organism to the stack """
@@ -30,15 +31,17 @@ class Culture():
             self.boundary = new_cells
             self.all_cells = new_cells
             self.empty = False
+            self.life = new_cells.astype(float) * 1000
         else:
             self.cells = np.dstack((self.cells, new_cells))
             self.boundary = np.dstack((self.boundary, new_cells))
+            self.life = np.dstack((self.life, new_cells.astype(float) * 5))
             self.all_cells = np.sum(self.cells, axis=2)
 
         # Add parameters for new organism
         self.grow.append(random.random() * .5)
         self.attack.append(random.random())
-        self.color.append((random.randint(0, 50),
+        self.color.append((random.randint(0, 10),
                            random.randint(0, 255),
                            random.randint(0, 50)))
 
@@ -71,6 +74,8 @@ class Culture():
                 np.invert(self.all_cells)) * self.template
             area[area > 0] = np.random.random(np.sum(area)) < self.grow[c]
             self.cells[..., c] += area
+            new_life = area.astype(float) * 10
+            self.life[..., c] += new_life
             self.boundary[..., c] = (self.cells[..., c] -
                                      nd.binary_erosion(self.cells[..., c]))
             self.all_cells = np.bitwise_or(self.all_cells,
@@ -78,9 +83,13 @@ class Culture():
 
     def decay(self):
         """ Removes expired cells. """
+        print(">>>>")
+        print(self.life[..., 0])
         self.life -= (time.time() - self.last_update)
-        self.clear_cells(np.sum(self.life < 0, axis=2))
+        self.clear_cells(np.sum(self.life < 0, axis=2) > 0)
         self.update_all_cells()
+        self.life[self.life < 0] = 0
+        self.last_update = time.time()
 
     def fight(self):
         for c in range(self.cells.shape[-1]):
