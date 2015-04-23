@@ -42,7 +42,7 @@ def main(N=10):
     done = False
 
     # Initialize drawing area
-    SIZE = 4
+    SIZE = 64
     grid = Grid(width, height, SIZE, SIZE, screen)
 
     culture = stackmata.Culture(SIZE, SIZE)
@@ -70,7 +70,7 @@ def main(N=10):
         draw(grid, culture)
 
         pygame.display.flip()
-        clock.tick(1)
+        clock.tick(30)
 
 
 if __name__ == '__main__':

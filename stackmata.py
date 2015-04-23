@@ -39,7 +39,7 @@ class Culture():
             self.all_cells = np.sum(self.cells, axis=2)
 
         # Add parameters for new organism
-        self.grow.append(random.random() * .5)
+        self.grow.append(random.random() * .9)
         self.attack.append(random.random())
         self.color.append((random.randint(0, 10),
                            random.randint(0, 255),
@@ -68,13 +68,14 @@ class Culture():
 
     def growth(self):
         """ Grows each organism according to grow chance and template. """
+        self.last_update = time.time()
         for c in range(self.boundary.shape[-1]):
             area = np.bitwise_and(
                 nd.binary_dilation(self.cells[..., c]) - self.cells[..., c],
                 np.invert(self.all_cells)) * self.template
             area[area > 0] = np.random.random(np.sum(area)) < self.grow[c]
             self.cells[..., c] += area
-            new_life = area.astype(float) * 10
+            new_life = area.astype(float) * random.random()
             self.life[..., c] += new_life
             self.boundary[..., c] = (self.cells[..., c] -
                                      nd.binary_erosion(self.cells[..., c]))
@@ -83,9 +84,7 @@ class Culture():
 
     def decay(self):
         """ Removes expired cells. """
-        print(">>>>")
-        print(self.life[..., 0])
-        self.life -= (time.time() - self.last_update)
+        self.life[self.cells] -= (time.time() - self.last_update)
         self.clear_cells(np.sum(self.life < 0, axis=2) > 0)
         self.update_all_cells()
         self.life[self.life < 0] = 0
