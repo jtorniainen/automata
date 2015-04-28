@@ -26,9 +26,13 @@ class Grid(object):
 
 def draw(grid, culture):
     """ Draw organisms. """
-    for c in range(culture.boundary.shape[-1]):
-        for cell in np.transpose(culture.boundary[..., c].nonzero()):
-            grid.fill_cell(cell[1], cell[0], culture.color[c])
+    if culture.boundary.ndim == 2:
+        for cell in np.transpose(culture.boundary.nonzero()):
+            grid.fill_cell(cell[1], cell[0], culture.color[0])
+    else:
+        for c in range(culture.boundary.shape[-1]):
+            for cell in np.transpose(culture.boundary[..., c].nonzero()):
+                grid.fill_cell(cell[1], cell[0], culture.color[c])
 
 
 def main(N=10):
@@ -70,7 +74,7 @@ def main(N=10):
         draw(grid, culture)
 
         pygame.display.flip()
-        clock.tick(30)
+        clock.tick(10)
 
 
 if __name__ == '__main__':

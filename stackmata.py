@@ -39,11 +39,11 @@ class Culture():
             self.all_cells = np.sum(self.cells, axis=2)
 
         # Add parameters for new organism
-        self.grow.append(random.random() * .9)
-        self.attack.append(random.random())
-        self.color.append((random.randint(0, 10),
+        self.grow.append(random.random() * .15 + 0.05)
+        self.attack.append(random.random() * .2)
+        self.color.append((random.randint(0, 255),
                            random.randint(0, 255),
-                           random.randint(0, 50)))
+                           random.randint(0, 255)))
 
     def generate_template(self, radius):
         """ Generates a circular template to determine valid growing areas. """
@@ -75,7 +75,8 @@ class Culture():
                 np.invert(self.all_cells)) * self.template
             area[area > 0] = np.random.random(np.sum(area)) < self.grow[c]
             self.cells[..., c] += area
-            new_life = area.astype(float) * random.random()
+            #  new_life = area.astype(float) * random.random()
+            new_life = self.calculate_life(self.cells[..., c], area, 1)
             self.life[..., c] += new_life
             self.boundary[..., c] = (self.cells[..., c] -
                                      nd.binary_erosion(self.cells[..., c]))
@@ -100,3 +101,12 @@ class Culture():
             self.cells[..., c] += area
             self.boundary[..., c] = (self.cells[..., c] -
                                      nd.binary_erosion(self.cells[..., c]))
+
+    def calculate_life(self, cells, area, radius):
+        y, x = nd.center_of_mass(cells)
+        life = np.zeros(np.shape(area))
+        for cell in np.transpose(area.nonzero()):
+            d = np.sqrt(np.power(y - cell[0], 2) + np.power(x - cell[1], 2))
+            #life[cell[0], cell[1]] = d * radius + random.random() * .2
+            life[cell[0], cell[1]] = (1.0 / d) * radius
+        return life
