@@ -20,6 +20,7 @@ class Culture():
         self.life = []
         self.template = self.generate_template(width/2)
         self.last_update = time.time()
+        self.centers = []
 
     def add_organism(self, seed):
         """ Add new organism to the stack """
@@ -39,6 +40,7 @@ class Culture():
             self.all_cells = np.sum(self.cells, axis=2)
 
         # Add parameters for new organism
+        self.centers.append((seed[1], seed[0]))
         self.grow.append(random.random() * .15 + 0.05)
         self.attack.append(random.random() * .2)
         self.color.append((random.randint(0, 255),
@@ -98,9 +100,6 @@ class Culture():
                                   self.all_cells - self.cells[..., c])
             area[area > 0] = np.random.random(np.sum(area)) < self.attack[c]
             self.clear_cells(area.astype(bool))
-            self.cells[..., c] += area
-            self.boundary[..., c] = (self.cells[..., c] -
-                                     nd.binary_erosion(self.cells[..., c]))
 
     def calculate_life(self, cells, area, radius):
         y, x = nd.center_of_mass(cells)

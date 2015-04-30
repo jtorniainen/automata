@@ -31,7 +31,7 @@ def draw(grid, culture):
             grid.fill_cell(cell[1], cell[0], culture.color[0])
     else:
         for c in range(culture.boundary.shape[-1]):
-            for cell in np.transpose(culture.boundary[..., c].nonzero()):
+            for cell in np.transpose(culture.cells[..., c].nonzero()):
                 grid.fill_cell(cell[1], cell[0], culture.color[c])
 
 
