@@ -15,6 +15,7 @@ class Culture():
         self.grow = []
         self.attack = []
         self.color = []
+        self.new_color = []
         self.empty = True
         self.all_cells = np.zeros((self.height, self.width), dtype=bool)
         self.life = []
@@ -46,6 +47,7 @@ class Culture():
         self.color.append((random.randint(0, 255),
                            random.randint(0, 255),
                            random.randint(0, 255)))
+        self.new_color.append(random.random())
 
     def generate_template(self, radius):
         """ Generates a circular template to determine valid growing areas. """
@@ -77,7 +79,6 @@ class Culture():
                 np.invert(self.all_cells)) * self.template
             area[area > 0] = np.random.random(np.sum(area)) < self.grow[c]
             self.cells[..., c] += area
-            #  new_life = area.astype(float) * random.random()
             new_life = self.calculate_life(self.cells[..., c], area, 1)
             self.life[..., c] += new_life
             self.boundary[..., c] = (self.cells[..., c] -
@@ -106,6 +107,5 @@ class Culture():
         life = np.zeros(np.shape(area))
         for cell in np.transpose(area.nonzero()):
             d = np.sqrt(np.power(y - cell[0], 2) + np.power(x - cell[1], 2))
-            #life[cell[0], cell[1]] = d * radius + random.random() * .2
-            life[cell[0], cell[1]] = (1.0 / d) * radius
+            life[cell[0], cell[1]] = (1.0 / d) * radius + random.random() * .5 + .1
         return life

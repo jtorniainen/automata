@@ -3,7 +3,7 @@ import pygame
 from random import randint
 import sys
 import stackmata
-
+import colorsys
 
 class Grid(object):
 
@@ -24,6 +24,17 @@ class Grid(object):
         self.screen.fill(color, rect=(x, y, self.cell_w, self.cell_h))
 
 
+def map_life(life):
+    life = life / 7.0
+    if life > 1.0:
+        life = 1.0
+    return life
+
+
+def hsv_to_rgb(color, life):
+    return tuple(255 * col for col in colorsys.hsv_to_rgb(color, 1, map_life(life)))
+
+
 def draw(grid, culture):
     """ Draw organisms. """
     if culture.boundary.ndim == 2:
@@ -32,7 +43,8 @@ def draw(grid, culture):
     else:
         for c in range(culture.boundary.shape[-1]):
             for cell in np.transpose(culture.cells[..., c].nonzero()):
-                grid.fill_cell(cell[1], cell[0], culture.color[c])
+                # grid.fill_cell(cell[1], cell[0], culture.color[c])
+                grid.fill_cell(cell[1], cell[0], hsv_to_rgb(culture.new_color[c], culture.life[cell[1], cell[0], c]))
 
 
 def main(N=10):
@@ -46,7 +58,7 @@ def main(N=10):
     done = False
 
     # Initialize drawing area
-    SIZE = 64
+    SIZE = 128
     grid = Grid(width, height, SIZE, SIZE, screen)
 
     culture = stackmata.Culture(SIZE, SIZE)
