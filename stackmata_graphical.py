@@ -25,14 +25,15 @@ class Grid(object):
 
 
 def map_life(life):
-    life = life / 7.0
+    life = life / 0.15
     if life > 1.0:
         life = 1.0
     return life
 
 
 def hsv_to_rgb(color, life):
-    return tuple(255 * col for col in colorsys.hsv_to_rgb(color, 1, map_life(life)))
+    return tuple(255 * col for col in colorsys.hsv_to_rgb(color, 1,
+                                                          map_life(life)))
 
 
 def draw(grid, culture):
@@ -58,7 +59,7 @@ def main(N=10):
     done = False
 
     # Initialize drawing area
-    SIZE = 128
+    SIZE = 64
     grid = Grid(width, height, SIZE, SIZE, screen)
 
     culture = stackmata.Culture(SIZE, SIZE)
